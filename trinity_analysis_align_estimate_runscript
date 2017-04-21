@@ -1,0 +1,87 @@
+#!/bin/bash
+#This script uses the Trinity genetic analysis suite to create a large data file of contigs from raw transcript reads, and then uses RSEM to align and #estimate the expression levels of the different genes. Finally, it creates a large matrix of all genes across all the differrent DNA samples for analysis.
+
+start_time=$SECONDS
+
+export PATH="/home/nick/trinityrnaseq-Trinity-v2.3.2:$PATH"
+export PATH="/home/nick/bowtie2-2.2.9:$PATH"
+export PATH="/home/nick/samtools-1.3.1:$PATH"
+export PATH="/home/nick/RSEM-1.3.0:$PATH"
+
+#Call trinity for the venus flytrap data first, then the Cnidarian data
+
+Trinity --trimmomatic --seqType fq --left EP-A-1_S1_L005_R1_001.fastq,EP-A-2_S2_L005_R1_001.fastq,EP-A-3_S3_L005_R1_001.fastq,EP-A-4_S4_L005_R1_001.fastq,EP-A-5_S5_L005_R1_001.fastq,EP-A-6_S6_L005_R1_001.fastq,EPerozo-A7_S1_L006_R1_001.fastq,EPerozo-A8_S2_L006_R1_001.fastq,EPerozo-A9_S3_L006_R1_001.fastq --right EP-A-1_S1_L005_R2_001.fastq,EP-A-2_S2_L005_R2_001.fastq,EP-A-3_S3_L005_R2_001.fastq,EP-A-4_S4_L005_R2_001.fastq,EP-A-5_S5_L005_R2_001.fastq,EP-A-6_S6_L005_R2_001.fastq,EPerozo-A7_S1_L006_R2_001.fastq,EPerozo-A8_S2_L006_R2_001.fastq,EPerozo-A9_S3_L006_R2_001.fastq --CPU 8 --max_memory 110G --output A1-9-group-trinity-output
+
+cd /home/nick/sdh_SSD
+
+Trinity --trimmomatic --seqType fq --left EP-T-1_S7_L005_R1_001.fastq,EP-T-2_S8_L005_R1_001.fastq,EP-T-3_S9_L005_R1_001.fastq,EP-T-4_S10_L005_R1_001.fastq,EP-T-5_S11_L005_R1_001.fastq,EPerozo-T6_S4_L006_R1_001.fastq,EPerozo-T7_S5_L006_R1_001.fastq,EPerozo-T8_S6_L006_R1_001.fastq --right EP-T-1_S7_L005_R2_001.fastq,EP-T-2_S8_L005_R2_001.fastq,EP-T-3_S9_L005_R2_001.fastq,EP-T-4_S10_L005_R2_001.fastq,EP-T-5_S11_L005_R2_001.fastq,EPerozo-T6_S4_L006_R2_001.fastq,EPerozo-T7_S5_L006_R2_001.fastq,EPerozo-T8_S6_L006_R2_001.fastq --CPU 8 --max_memory 110G --output T1-8-group-trinity-output
+
+cd /home/nick/Transcriptome_data
+
+
+#Align and estimate expression levels for the venus flytrap data
+
+for i in 1 2 3 4 5 6
+
+do
+
+	run_num=$i
+
+	../trinityrnaseq-Trinity-v2.3.2/util/align_and_estimate_abundance.pl --transcripts A1-9-group-trinity-output/Trinity.fasta --seqType fq --left A1-9-group-trinity-output/EP-A-${run_num}_S${run_num}_L005_R1_001.fastq.PwU.qtrim.fq --right A1-9-group-trinity-output/EP-A-${run_num}_S${run_num}_L005_R2_001.fastq.PwU.qtrim.fq --SS_lib_type RF --aln_method bowtie2 --est_method RSEM --output_dir /home/nick/Transcriptome_data/A-${run_num}-differential-expression-trimmPwE --thread_count 8 --prep_reference --trinity_mode --output_prefix A-${run_num}-align-to-group-trimmPwE
+
+	end_time=$SECONDS
+	total_time=$(expr $end_time - $start_time)
+	echo "Current run time is "$total_time
+
+done
+
+for i in 7 8 9
+
+do
+
+	run_num=$i
+	s_num=$((run_num-6))
+
+	../trinityrnaseq-Trinity-v2.3.2/util/align_and_estimate_abundance.pl --transcripts A1-9-group-trinity-output/Trinity.fasta --seqType fq --left A1-9-group-trinity-output/EPerozo-A${run_num}_S${s_num}_L006_R1_001.fastq.PwU.qtrim.fq --right A1-9-group-trinity-output/EPerozo-A${run_num}_S${s_num}_L006_R2_001.fastq.PwU.qtrim.fq --SS_lib_type RF --aln_method bowtie2 --est_method RSEM --output_dir /home/nick/Transcriptome_data/A-${run_num}-differential-expression-trimmPwE --thread_count 8 --prep_reference --trinity_mode --output_prefix A-${run_num}-align-to-group-trimmPwE
+
+done
+
+
+cd /home/nick/sdh_SSD
+
+
+#Align and estimate for the Cnidarian data
+
+for i in 1 2 3 4 5
+
+do
+
+	run_num=$i
+	s_num=$((run_num+6))
+
+	../trinityrnaseq-Trinity-v2.3.2/util/align_and_estimate_abundance.pl --transcripts T1-8-group-trinity-output/Trinity.fasta --seqType fq --left T1-8-group-trinity-output/EP-T-${run_num}_S${s_num}_L005_R1_001.fastq.PwU.qtrim.fq --right T1-8-group-trinity-output/EP-T-${run_num}_S${s_num}_L005_R2_001.fastq.PwU.qtrim.fq --SS_lib_type RF --aln_method bowtie2 --est_method RSEM --output_dir /home/nick/sdh_SSD/T-${run_num}-differential-expression-trimmPwE --thread_count 8 --prep_reference --trinity_mode --output_prefix T-${run_num}-align-to-group-trimmPwE
+
+done
+
+for i in 6 7 8
+
+do
+
+	run_num=$i
+	s_num=$((run_num-2))
+
+	../trinityrnaseq-Trinity-v2.3.2/util/align_and_estimate_abundance.pl --transcripts T1-8-group-trinity-output/Trinity.fasta --seqType fq --left T1-8-group-trinity-output/EPerozo-T${run_num}_S${s_num}_L006_R1_001.fastq.PwU.qtrim.fq --right T1-8-group-trinity-output/EPerozo-T${run_num}_S${s_num}_L006_R2_001.fastq.PwU.qtrim.fq --SS_lib_type RF --aln_method bowtie2 --est_method RSEM --output_dir /home/nick/sdh_SSD/T-${run_num}-differential-expression-trimmPwE --thread_count 8 --prep_reference --trinity_mode --output_prefix T-${run_num}-align-to-group-trimmPwE
+
+done
+
+#Construct final matrix for the venus flytrap data (Cnidarian run separately)
+
+../trinityrnaseq-Trinity-v2.3.2/util/abundance_estimates_to_matrix.pl --est_method RSEM --out_prefix A1-9-matrix-genes-trimm-PwE A-1-differential-expression-trimmPwE/A-1-align-to-group-trimmPwE.genes.results A-2-differential-expression-trimmPwE/A-2-align-to-group-trimmPwE.genes.results A-3-differential-expression-trimmPwE/A-3-align-to-group-trimmPwE.genes.results A-4-differential-expression-trimmPwE/A-4-align-to-group-trimmPwE.genes.results A-5-differential-expression-trimmPwE/A-5-align-to-group-trimmPwE.genes.results A-6-differential-expression-trimmPwE/A-6-align-to-group-trimmPwE.genes.results A-7-differential-expression-trimmPwE/A-7-align-to-group-trimmPwE.genes.results A-8-differential-expression-trimmPwE/A-8-align-to-group-trimmPwE.genes.results A-9-differential-expression-trimmPwE/A-9-align-to-group-trimmPwE.genes.results
+
+
+cd /home/nick/Transcriptome_data
+
+
+end_time=$SECONDS
+total_time=$(expr $end_time - $start_time)
+echo "Total run time is "$total_time
